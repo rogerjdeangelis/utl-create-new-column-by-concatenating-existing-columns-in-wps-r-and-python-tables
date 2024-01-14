@@ -10,6 +10,8 @@ Create new column by concatenating existing columns in wps r and python tables;
       4  wps r loop
       5  wps r mutate
       6  wps python
+      7  wps r base
+         Gerald Cheves gic2@tc.columbia.edu
 
 github
 http://tinyurl.com/258r2m3f
@@ -37,7 +39,7 @@ https://github.com/rogerjdeangelis/utl-converting-common-wps-coding-to-r-and-pyt
 /*                              |    -------------------                  |                                               */
 /*  1      a       f       k    |    select                               |   1      a       f       k      a f k         */
 /*  2      b       g       l    |      *                                  |   2      b       g       l      b g l         */
-/*  3      c       h       m    |     ,col1||` `||col2||` `||col3 as dfs  |   3      c       h       m      c h m         */
+/*  3      c       h       m    |     ,col1||' '||col2||' '||col3 as dfs  |   3      c       h       m      c h m         */
 /*  4      d       i       n    |    from                                 |   4      d       i       n      d i n         */
 /*  5      e       j       o    |      have                               |   5      e       j       o      e j o         */
 /*                              |                                         |                                               */
@@ -59,6 +61,12 @@ https://github.com/rogerjdeangelis/utl-converting-common-wps-coding-to-r-and-pyt
 /*                              |    have['DFS'] =                        |                                               */
 /*                              |      have['COL1'] +'  + have['COL2']  + |                                               */
 /*                              |      + ' '  + have['COL3']              |                                               */
+/*                              |                                         |                                               */
+/*                              |    WPS R BASE                           |                                               */
+/*                              |    ==========                           |                                               */
+/*                              |    have$DFS<-do.call(paste,    |        |                                               */
+/*                              |      have[c("COL1","COL2","COL3")]);    |                                               */
+/*                              |                                         |                                               */
 /*                              |                                         |                                               */
 /**************************************************************************************************************************/
 
@@ -375,6 +383,46 @@ endsubmit;
  /* 4    e    j    o  e j o                                                                                                */
  /*                                                                                                                        */
  /**************************************************************************************************************************/
+
+
+/*____                               _
+|___  | __      ___ __  ___   _ __  | |__   __ _ ___  ___
+   / /  \ \ /\ / / `_ \/ __| | `__| | `_ \ / _` / __|/ _ \
+  / /    \ V  V /| |_) \__ \ | |    | |_) | (_| \__ \  __/
+ /_/      \_/\_/ | .__/|___/ |_|    |_.__/ \__,_|___/\___|
+                 |_|
+*/
+
+
+proc datasets lib=sd1 nolist nodetails;delete want; run;quit;
+
+%utl_submit_wps64x('
+libname sd1 "d:/sd1";
+proc r;
+export data=sd1.have r=have;
+submit;
+have$DFS<-do.call(paste, have[c("COL1","COL2","COL3")]);
+have;
+endsubmit;
+import data=sd1.want r=have;
+run;quit;
+');
+
+proc print data=sd1.want width=min;
+run;quit;
+
+/**************************************************************************************************************************/
+/*                                                                                                                        */
+/* The WPS R System                                                                                                       */
+/*                                                                                                                        */
+/*   COL1 COL2 COL3     DFS                                                                                               */
+/* 1    a    f    k   a f k                                                                                               */
+/* 2    b    g    l   b g l                                                                                               */
+/* 3    c    h    m   c h m                                                                                               */
+/* 4    d    i    n   d i n                                                                                               */
+/* 5    e    j    o   e j o                                                                                               */
+/*                                                                                                                        */
+/**************************************************************************************************************************/
 
 /*              _
   ___ _ __   __| |
